@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zakho Crush - Dalal Bridge Adventure</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #7f1d1d 100%);
+            --card-bg: rgba(255, 251, 235, 0.97);
+            --board-bg: linear-gradient(145deg, #b45309, #d97706);
+            --tile-bg: #fffbe2;
+            --primary: #d97706;
+            --accent: #e11d48;
+            --dark: #1e1b4b;
+            --bridge-stone: #92400e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #f59e0b;
+        }
+
+        /* Sunset SVGs Header */
+        .bridge-art-container {
+            width: 100%;
+            height: 110px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 2px solid #fbbf24;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        }
+
+        .screen {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #9a3412;
+            text-shadow: 2px 2px 0px #fef08a;
+            margin-bottom: 2px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #047857;
+            margin-bottom: 6px;
+            font-weight: 800;
+        }
+
+        /* Powered By Tag Style */
+        .powered-by {
+            font-size: 13px;
+            font-weight: 800;
+            color: #b45309;
+            background: #fef3c7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1.5px solid #fde047;
+            margin-bottom: 12px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .btn {
+            background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%);
+            color: white;
+            border: none;
+            padding: 11px 24px;
+            font-size: 16px;
+            font-weight: 800;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(225, 29, 72, 0.6);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #fef3c7;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border: 2px solid #fde047;
+        }
+
+        .level-node {
+            width: 46px;
+            height: 46px;
+            background: #b45309;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            border: 2px solid #fef3c7;
+            margin: auto;
+        }
+
+        .level-node.unlocked {
+            background: linear-gradient(180deg, #10b981, #047857);
+            border: 2px solid #a7f3d0;
+        }
+
+        .level-node.completed {
+            background: linear-gradient(180deg, #f59e0b, #d97706);
+            border: 2px solid #fef08a;
+        }
+
+        .level-node:hover {
+            transform: scale(1.12);
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, #fef3c7, #fed7aa);
+            padding: 10px 16px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #78350f;
+            border: 2px solid #fde047;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .board-wrapper {
+            position: relative;
+            z-index: 1;
+            background: var(--board-bg);
+            padding: 10px;
+            border-radius: 18px;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 3px solid #fef08a;
+        }
+
+        .grid-board {
+            display: grid;
+            gap: 5px;
+        }
+
+        .tile {
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            transition: transform 0.15s ease, background-color 0.2s, box-shadow 0.2s;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15), 0 3px 6px rgba(0,0,0,0.15);
+            background: var(--tile-bg);
+            position: relative;
+        }
+
+        .tile:active {
+            cursor: grabbing;
+        }
+
+        .tile:hover {
+            transform: scale(1.08);
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+        }
+
+        .tile.selected {
+            border: 3px solid #e11d48;
+            background-color: #fef08a;
+            transform: scale(1.12);
+            z-index: 2;
+            box-shadow: 0 0 12px #f43f5e;
+        }
+
+        .tile.bomb-line {
+            background: linear-gradient(135deg, #fecdd3, #fda4af);
+            border: 2px solid #e11d48;
+            animation: pulse 0.8s infinite alternate;
+        }
+
+        .tile.bomb-color {
+            background: linear-gradient(135deg, #f5d0fe, #e9d5ff);
+            border: 2px solid #9333ea;
+            animation: pulse 0.6s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.12); }
+        }
+
+        .overlay-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: white;
+            padding: 20px;
+        }
+
+        .overlay-card {
+            background: var(--card-bg);
+            color: var(--dark);
+            padding: 24px;
+            border-radius: 20px;
+            text-align: center;
+            width: 85%;
+            max-width: 320px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border: 4px solid #f59e0b;
+        }
+
+        .overlay-card h2 {
+            margin-bottom: 8px;
+            color: #9a3412;
+            font-size: 22px;
+        }
+
+        .overlay-card p {
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: #451a03;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 14px;
+            font-weight: bold;
+            font-size: 15px;
+            color: #78350f;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- DETAILED SVG ARTWORK OF DALAL BRIDGE IN ZAKHO -->
+        <div class="bridge-art-container">
+            <svg width="100%" height="100%" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">
+                <rect width="400" height="120" fill="url(#sunsetGradient)" />
+                <circle cx="330" cy="28" r="18" fill="#fef08a" opacity="0.9" />
+                
+                <!-- Khabur River -->
+                <rect y="82" width="400" height="38" fill="#0284c7" />
+                <path d="M 0 88 Q 100 84, 200 88 T 400 88 L 400 120 L 0 120 Z" fill="#0369a1" opacity="0.7" />
+                
+                <!-- Dalal Bridge Architecture -->
+                <path d="M 10 88 
+                         L 40 78 
+                         L 90 73 
+                         L 150 42 
+                         L 230 42 
+                         L 310 73 
+                         L 360 80 
+                         L 390 88 
+                         L 390 95 
+                         L 0 95 Z" fill="#78350f" stroke="#451a03" stroke-width="2" />
+                
+                <!-- Central Arch -->
+                <path d="M 160 95 A 35 35 0 0 1 220 95 Z" fill="#0284c7" stroke="#451a03" stroke-width="2" />
+                
+                <!-- Side Arches -->
+                <path d="M 90 95 A 18 18 0 0 1 125 95 Z" fill="#0284c7" stroke="#451a03" stroke-width="1.5" />
+                <path d="M 255 95 A 18 18 0 0 1 290 95 Z" fill="#0284c7" stroke="#451a03" stroke-width="1.5" />
+                <path d="M 40 95 A 12 12 0 0 1 65 95 Z" fill="#0284c7" stroke="#451a03" stroke-width="1" />
+                <path d="M 320 95 A 12 12 0 0 1 345 95 Z" fill="#0284c7" stroke="#451a03" stroke-width="1" />
+
+                <!-- Stone Lines Texture -->
+                <line x1="150" y1="42" x2="230" y2="42" stroke="#fef08a" stroke-width="1.5" opacity="0.6" />
+                <line x1="130" y1="58" x2="250" y2="58" stroke="#fef08a" stroke-width="1" stroke-dasharray="6,3" opacity="0.4" />
+                
+                <defs>
+                    <linearGradient id="sunsetGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#fdba74" />
+                        <stop offset="50%" stop-color="#f43f5e" />
+                        <stop offset="100%" stop-color="#6366f1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- MAIN MENU -->
+        <div id="menu-screen" class="screen">
+            <h1>ZAKHO CRUSH</h1>
+            <div class="subtitle">Dalal Bridge Sweet Adventure</div>
+            <div class="powered-by">⚡ Powered BY YASIRWKH</div>
+            <p style="margin-bottom: 12px; font-size: 13px; line-height: 1.4; color: #451a03;">
+                Journey through 100 levels across <b>Dalal Bridge (Pira Delal)</b>!<br>
+                • Match 4 to make <b>Line Bombs 💣</b><br>
+                • Match 5 to make <b>Color Bombs 🌈</b><br>
+                • <b>Click any bomb to detonate it instantly!</b>
+            </p>
+            <button class="btn" onclick="showLevelMap()">Play Game</button>
+        </div>
+
+        <!-- LEVEL MAP SCREEN -->
+        <div id="map-screen" class="screen hidden">
+            <h1>Select Level</h1>
+            <div class="subtitle" id="current-tier-title">Dalal Bridge Tier 1</div>
+            <div class="map-grid" id="map-grid"></div>
+            <button class="btn" style="padding: 6px 16px; font-size: 13px;" onclick="showMenu()">Back to Menu</button>
+        </div>
+
+        <!-- GAMEPLAY SCREEN -->
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div>Lvl: <span id="lbl-level">1</span></div>
+                <div>Moves: <span id="lbl-moves">20</span></div>
+                <div>Score: <span id="lbl-score">0</span> / <span id="lbl-target">400</span></div>
+            </div>
+
+            <div class="board-wrapper">
+                <div id="game-board" class="grid-board"></div>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; gap: 10px;">
+                <button class="btn" style="padding: 6px 14px; font-size: 12px;" onclick="showLevelMap()">Levels</button>
+                <button class="btn" style="padding: 6px 14px; font-size: 12px; background: linear-gradient(180deg, #d97706, #b45309);" onclick="restartLevel()">Restart</button>
+            </div>
+        </div>
+
+        <!-- LEVEL COMPLETED MODAL -->
+        <div id="win-screen" class="overlay-screen hidden">
+            <div class="overlay-card">
+                <h2>🎉 Level Cleared!</h2>
+                <p id="win-message">You crossed this section of Dalal Bridge!</p>
+                <div class="stats-row">
+                    <span>Score: <span id="win-score">0</span></span>
+                </div>
+                <button class="btn" onclick="nextLevel()">Next Level</button>
+                <br>
+                <button class="btn" style="background: linear-gradient(180deg, #10b981, #047857); font-size: 13px; padding: 6px 14px;" onclick="showLevelMap()">Level Map</button>
+            </div>
+        </div>
+
+        <!-- LEVEL FAILED MODAL -->
+        <div id="lose-screen" class="overlay-screen hidden">
+            <div class="overlay-card">
+                <h2>⚠️ Out of Moves!</h2>
+                <p>The Khabur river currents were too strong. Try again!</p>
+                <button class="btn" onclick="restartLevel()">Try Again</button>
+                <br>
+                <button class="btn" style="background: linear-gradient(180deg, #10b981, #047857); font-size: 13px; padding: 6px 14px;" onclick="showLevelMap()">Level Map</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_LEVELS = 100;
+        let unlockedLevel = parseInt(localStorage.getItem('zakho_unlocked')) || 1;
+        let currentLevel = 1;
+        let score = 0;
+        let targetScore = 400;
+        let movesLeft = 20;
+        
+        let rows = 5;
+        let cols = 5;
+        let tileSize = 52;
+        let fontSize = 28;
+
+        let board = [];
+        const sweets = ['🍬', '🍭', '🍫', '🍩', '🍪'];
+        const LINE_BOMB = '💣';
+        const COLOR_BOMB = '🌈';
+        
+        let draggedTile = null;
+        let targetTile = null;
+        let isProcessing = false;
+
+        const menuScreen = document.getElementById('menu-screen');
+        const mapScreen = document.getElementById('map-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const winScreen = document.getElementById('win-screen');
+        const loseScreen = document.getElementById('lose-screen');
+        const mapGrid = document.getElementById('map-grid');
+        const gameBoard = document.getElementById('game-board');
+
+        function showMenu() {
+            menuScreen.classList.remove('hidden');
+            mapScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            loseScreen.classList.add('hidden');
+        }
+
+        function showLevelMap() {
+            menuScreen.classList.add('hidden');
+            mapScreen.classList.remove('hidden');
+            gameScreen.classList.add('hidden');
+            winScreen.classList.add('hidden');
+            loseScreen.classList.add('hidden');
+            buildLevelMap();
+        }
+
+        function buildLevelMap() {
+            mapGrid.innerHTML = '';
+            for (let i = 1; i <= TOTAL_LEVELS; i++) {
+                const node = document.createElement('div');
+                node.className = 'level-node';
+                node.innerText = i;
+                
+                if (i <= unlockedLevel) {
+                    node.classList.add('unlocked');
+                    if (i < unlockedLevel) node.classList.add('completed');
+                    node.onclick = () => startLevel(i);
+                }
+                mapGrid.appendChild(node);
+            }
+
+            let tier = Math.floor((currentLevel - 1) / 10) + 1;
+            document.getElementById('current-tier-title').innerText = `Dalal Bridge Tier ${tier}/10`;
+        }
+
+        function startLevel(lvl) {
+            currentLevel = lvl;
+            menuScreen.classList.add('hidden');
+            mapScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            winScreen.classList.add('hidden');
+            loseScreen.classList.add('hidden');
+            isProcessing = false;
+
+            setupLevelParameters();
+            initBoard();
+            renderBoard();
+            updateUI();
+        }
+
+        function restartLevel() {
+            startLevel(currentLevel);
+        }
+
+        function nextLevel() {
+            if (currentLevel < TOTAL_LEVELS) {
+                if (currentLevel >= unlockedLevel) {
+                    unlockedLevel = currentLevel + 1;
+                    localStorage.setItem('zakho_unlocked', unlockedLevel);
+                }
+                startLevel(currentLevel + 1);
+            } else {
+                showLevelMap();
+            }
+        }
+
+        function setupLevelParameters() {
+            score = 0;
+            let tier = Math.floor((currentLevel - 1) / 10);
+
+            if (currentLevel <= 10) {
+                rows = 5;
+                cols = 5;
+                tileSize = 56;
+                fontSize = 32;
+                movesLeft = 20 - Math.floor((currentLevel - 1) / 2);
+                targetScore = 300 + (currentLevel * 80);
+            } else {
+                rows = 8;
+                cols = 8;
+                tileSize = 42;
+                fontSize = 24;
+                movesLeft = Math.max(15, 30 - tier * 1);
+                targetScore = 800 + (currentLevel * 120) + (tier * 300);
+            }
+
+            gameBoard.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
+            gameBoard.style.gridTemplateRows = `repeat(${rows}, ${tileSize}px)`;
+        }
+
+        function updateUI() {
+            document.getElementById('lbl-level').innerText = currentLevel;
+            document.getElementById('lbl-moves').innerText = movesLeft;
+            document.getElementById('lbl-score').innerText = score;
+            document.getElementById('lbl-target').innerText = targetScore;
+        }
+
+        function initBoard() {
+            let hasMatches;
+            do {
+                board = [];
+                for (let r = 0; r < rows; r++) {
+                    board[r] = [];
+                    for (let c = 0; c < cols; c++) {
+                        board[r][c] = Math.floor(Math.random() * sweets.length);
+                    }
+                }
+                hasMatches = checkInitialMatches();
+            } while (hasMatches);
+        }
+
+        function checkInitialMatches() {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    let val = board[r][c];
+                    if (c + 2 < cols && board[r][c+1] === val && board[r][c+2] === val) return true;
+                    if (r + 2 < rows && board[r+1][c] === val && board[r+2][c] === val) return true;
+                }
+            }
+            return false;
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.style.width = `${tileSize}px`;
+                    tile.style.height = `${tileSize}px`;
+                    tile.style.fontSize = `${fontSize}px`;
+                    tile.draggable = true;
+                    tile.dataset.row = r;
+                    tile.dataset.col = c;
+                    
+                    const val = board[r][c];
+                    if (val === LINE_BOMB) {
+                        tile.innerText = LINE_BOMB;
+                        tile.classList.add('bomb-line');
+                    } else if (val === COLOR_BOMB) {
+                        tile.innerText = COLOR_BOMB;
+                        tile.classList.add('bomb-color');
+                    } else if (val !== null && val !== undefined) {
+                        tile.innerText = sweets[val];
+                    }
+
+                    tile.addEventListener('dragstart', dragStart);
+                    tile.addEventListener('dragover', dragOver);
+                    tile.addEventListener('drop', dragDrop);
+                    tile.addEventListener('dragend', dragEnd);
+                    tile.addEventListener('click', () => handleTileClick(r, c));
+
+                    gameBoard.appendChild(tile);
+                }
+            }
+        }
+
+        let clickedSelection = null;
+        function handleTileClick(r, c) {
+            if (isProcessing || movesLeft <= 0) return;
+            const tileEl = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+            const val = board[r][c];
+
+            if (val === LINE_BOMB || val === COLOR_BOMB) {
+                if (clickedSelection) {
+                    const prevEl = document.querySelector(`[data-row='${clickedSelection.r}'][data-col='${clickedSelection.col}']`);
+                    if (prevEl) prevEl.classList.remove('selected');
+                    clickedSelection = null;
+                }
+                detonateBombAt(r, c);
+                return;
+            }
+
+            if (!clickedSelection) {
+                clickedSelection = {r, c};
+                tileEl.classList.add('selected');
+            } else {
+                const prevEl = document.querySelector(`[data-row='${clickedSelection.r}'][data-col='${clickedSelection.col}']`);
+                if (prevEl) prevEl.classList.remove('selected');
+
+                if (clickedSelection.r === r && clickedSelection.c === c) {
+                    clickedSelection = null;
+                    return;
+                }
+
+                const isAdjacent = Math.abs(clickedSelection.r - r) + Math.abs(clickedSelection.c - c) === 1;
+                if (isAdjacent) {
+                    executeSwap(clickedSelection.r, clickedSelection.c, r, c);
+                }
+                clickedSelection = null;
+            }
+        }
+
+        function detonateBombAt(r, c) {
+            movesLeft--;
+            updateUI();
+            let bombType = board[r][c];
+
+            if (bombType === LINE_BOMB) {
+                let clearSet = new Set();
+                for (let i = 0; i < cols; i++) clearSet.add(`${r},${i}`);
+                for (let j = 0; j < rows; j++) clearSet.add(`${j},${c}`);
+                
+                let matches = Array.from(clearSet).map(item => {
+                    let parts = item.split(',');
+                    return {r: parseInt(parts[0]), c: parseInt(parts[1])};
+                });
+                
+                score += matches.length * 50;
+                updateUI();
+                matches.forEach(m => { board[m.r][m.c] = null; });
+                renderBoard();
+                setTimeout(() => { applyGravity(); }, 300);
+
+            } else if (bombType === COLOR_BOMB) {
+                let randomTargetColor = Math.floor(Math.random() * sweets.length);
+                triggerColorBomb({r, c}, randomTargetColor);
+            }
+        }
+
+        function dragStart() {
+            if (isProcessing || movesLeft <= 0) return;
+            draggedTile = {
+                r: parseInt(this.dataset.row),
+                c: parseInt(this.dataset.col)
+            };
+        }
+
+        function dragOver(e) { e.preventDefault(); }
+
+        function dragDrop() {
+            if (isProcessing || movesLeft <= 0) return;
+            targetTile = {
+                r: parseInt(this.dataset.row),
+                c: parseInt(this.dataset.col)
+            };
+        }
+
+        function dragEnd() {
+            if (!draggedTile || !targetTile || isProcessing || movesLeft <= 0) return;
+
+            const isAdjacent = Math.abs(draggedTile.r - targetTile.r) + Math.abs(draggedTile.c - targetTile.c) === 1;
+
+            if (isAdjacent) {
+                executeSwap(draggedTile.r, draggedTile.c, targetTile.r, targetTile.c);
+            }
+
+            draggedTile = null;
+            targetTile = null;
+        }
+
+        function executeSwap(r1, c1, r2, c2) {
+            let val1 = board[r1][c1];
+            let val2 = board[r2][c2];
+
+            if (val1 === COLOR_BOMB || val2 === COLOR_BOMB) {
+                movesLeft--;
+                updateUI();
+                let bombTile = val1 === COLOR_BOMB ? {r: r1, c: c1} : {r: r2, c: c2};
+                let targetVal = val1 === COLOR_BOMB ? val2 : val1;
+                triggerColorBomb(bombTile, targetVal);
+                return;
+            }
+
+            board[r1][c1] = val2;
+            board[r2][c2] = val1;
+            renderBoard();
+
+            let matchResult = findMatchGroups();
+            if (matchResult.matches.length > 0 || val1 === LINE_BOMB || val2 === LINE_BOMB) {
+                movesLeft--;
+                updateUI();
+                processMatches(matchResult, {r: r2, c: c2});
+            } else {
+                setTimeout(() => {
+                    board[r1][c1] = val1;
+                    board[r2][c2] = val2;
+                    renderBoard();
+                }, 200);
+            }
+        }
+
+        function findMatchGroups() {
+            let matchSet = new Set();
+            let groups = [];
+
+            for (let r = 0; r < rows; r++) {
+                let matchLen = 1;
+                for (let c = 0; c < cols; c++) {
+                    let checkNext = (c < cols - 1) && (board[r][c] !== null) && (typeof board[r][c] === 'number') && (board[r][c] === board[r][c+1]);
+                    if (checkNext) {
+                        matchLen++;
+                    } else {
+                        if (matchLen >= 3) {
+                            let group = [];
+                            for (let k = 0; k < matchLen; k++) {
+                                let cellKey = `${r},${c - k}`;
+                                matchSet.add(cellKey);
+                                group.push({r, c: c - k});
+                            }
+                            groups.push(group);
+                        }
+                        matchLen = 1;
+                    }
+                }
+            }
+
+            for (let c = 0; c < cols; c++) {
+                let matchLen = 1;
+                for (let r = 0; r < rows; r++) {
+                    let checkNext = (r < rows - 1) && (board[r][c] !== null) && (typeof board[r][c] === 'number') && (board[r][c] === board[r+1][c]);
+                    if (checkNext) {
+                        matchLen++;
+                    } else {
+                        if (matchLen >= 3) {
+                            let group = [];
+                            for (let k = 0; k < matchLen; k++) {
+                                let cellKey = `${r - k},${c}`;
+                                matchSet.add(cellKey);
+                                group.push({r: r - k, c});
+                            }
+                            groups.push(group);
+                        }
+                        matchLen = 1;
+                    }
+                }
+            }
+
+            let matches = Array.from(matchSet).map(item => {
+                let parts = item.split(',');
+                return {r: parseInt(parts[0]), c: parseInt(parts[1])};
+            });
+
+            return { matches, groups };
+        }
+
+        function triggerColorBomb(bombTile, targetType) {
+            isProcessing = true;
+            let clearSet = new Set();
+            clearSet.add(`${bombTile.r},${bombTile.c}`);
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c] === targetType) {
+                        clearSet.add(`${r},${c}`);
+                    }
+                }
+            }
+
+            let matches = Array.from(clearSet).map(item => {
+                let parts = item.split(',');
+                return {r: parseInt(parts[0]), c: parseInt(parts[1])};
+            });
+
+            score += matches.length * 60;
+            updateUI();
+
+            matches.forEach(m => { board[m.r][m.c] = null; });
+            renderBoard();
+
+            setTimeout(() => { applyGravity(); }, 300);
+        }
+
+        function processMatches(matchResult, swapTargetPos) {
+            isProcessing = true;
+
+            let clearSet = new Set();
+            let newBombsToSpawn = [];
+
+            matchResult.groups.forEach(group => {
+                let spawnPos = group.find(g => swapTargetPos && g.r === swapTargetPos.r && g.c === swapTargetPos.c) || group[0];
+
+                if (group.length >= 5) {
+                    newBombsToSpawn.push({ r: spawnPos.r, c: spawnPos.c, type: COLOR_BOMB });
+                } else if (group.length === 4) {
+                    newBombsToSpawn.push({ r: spawnPos.r, c: spawnPos.c, type: LINE_BOMB });
+                }
+            });
+
+            matchResult.matches.forEach(m => clearSet.add(`${m.r},${m.c}`));
+
+            matchResult.matches.forEach(m => {
+                if (board[m.r][m.c] === LINE_BOMB) {
+                    for (let c = 0; c < cols; c++) clearSet.add(`${m.r},${c}`);
+                    for (let r = 0; r < rows; r++) clearSet.add(`${r},${m.c}`);
+                }
+            });
+
+            let finalMatches = Array.from(clearSet).map(item => {
+                let parts = item.split(',');
+                return {r: parseInt(parts[0]), c: parseInt(parts[1])};
+            });
+
+            score += finalMatches.length * 40;
+            updateUI();
+
+            finalMatches.forEach(m => { board[m.r][m.c] = null; });
+
+            newBombsToSpawn.forEach(b => {
+                board[b.r][b.c] = b.type;
+            });
+
+            renderBoard();
+
+            setTimeout(() => { applyGravity(); }, 300);
+        }
+
+        function applyGravity() {
+            for (let c = 0; c < cols; c++) {
+                let writeRow = rows - 1;
+                for (let r = rows - 1; r >= 0; r--) {
+                    if (board[r][c] !== null) {
+                        board[writeRow][c] = board[r][c];
+                        if (writeRow !== r) board[r][c] = null;
+                        writeRow--;
+                    }
+                }
+                for (let r = writeRow; r >= 0; r--) {
+                    board[r][c] = Math.floor(Math.random() * sweets.length);
+                }
+            }
+
+            renderBoard();
+
+            setTimeout(() => {
+                let matchResult = findMatchGroups();
+                if (matchResult.matches.length > 0) {
+                    processMatches(matchResult, null);
+                } else {
+                    isProcessing = false;
+                    checkGameConditions();
+                }
+            }, 300);
+        }
+
+        function checkGameConditions() {
+            if (score >= targetScore) {
+                if (currentLevel >= unlockedLevel && currentLevel < TOTAL_LEVELS) {
+                    unlockedLevel = currentLevel + 1;
+                    localStorage.setItem('zakho_unlocked', unlockedLevel);
+                }
+                document.getElementById('win-score').innerText = score;
+                document.getElementById('win-message').innerText = `You successfully crossed this section of Dalal Bridge!`;
+                winScreen.classList.remove('hidden');
+            } else if (movesLeft <= 0) {
+                loseScreen.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
